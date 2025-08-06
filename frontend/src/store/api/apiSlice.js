@@ -2,12 +2,16 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: '/api',
-  prepareHeaders: (headers, { getState }) => {
+  prepareHeaders: (headers, { getState, extra }) => {
     const token = getState().auth.token;
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
-    headers.set('content-type', 'application/json');
+    
+    // Don't set content-type for FormData uploads
+    if (!extra?.formData) {
+      headers.set('content-type', 'application/json');
+    }
     return headers;
   },
 });

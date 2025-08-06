@@ -268,6 +268,43 @@ const Tasks = () => {
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Task
               </button>
+              
+              {/* Status Update Options */}
+              <div className="border-t border-gray-100 my-1"></div>
+              <div className="px-4 py-2">
+                <p className="text-xs text-gray-500 mb-1">Update Status:</p>
+                <div className="space-y-1">
+                  {task.status !== 'pending' && (
+                    <button
+                      onClick={() => handleStatusChange(task, 'pending')}
+                      className="flex items-center w-full px-2 py-1 text-xs text-gray-700 hover:bg-yellow-50 rounded"
+                    >
+                      <CheckSquare className="h-3 w-3 mr-2" />
+                      Mark as Pending
+                    </button>
+                  )}
+                  {task.status !== 'in-progress' && (
+                    <button
+                      onClick={() => handleStatusChange(task, 'in-progress')}
+                      className="flex items-center w-full px-2 py-1 text-xs text-gray-700 hover:bg-blue-50 rounded"
+                    >
+                      <Clock className="h-3 w-3 mr-2" />
+                      Mark as In Progress
+                    </button>
+                  )}
+                  {task.status !== 'completed' && (
+                    <button
+                      onClick={() => handleStatusChange(task, 'completed')}
+                      className="flex items-center w-full px-2 py-1 text-xs text-gray-700 hover:bg-green-50 rounded"
+                    >
+                      <CheckSquare className="h-3 w-3 mr-2" />
+                      Mark as Completed
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="border-t border-gray-100 my-1"></div>
               <button
                 onClick={() => handleDeleteTask(task._id)}
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"

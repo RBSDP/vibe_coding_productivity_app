@@ -27,8 +27,22 @@ router.get('/', auth, async (req, res) => {
     const query = { user: req.user._id };
     
     if (section) query.section = section;
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
+    if (status) {
+      // Handle multiple status values separated by comma
+      if (status.includes(',')) {
+        query.status = { $in: status.split(',') };
+      } else {
+        query.status = status;
+      }
+    }
+    if (priority) {
+      // Handle multiple priority values separated by comma
+      if (priority.includes(',')) {
+        query.priority = { $in: priority.split(',') };
+      } else {
+        query.priority = priority;
+      }
+    }
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },

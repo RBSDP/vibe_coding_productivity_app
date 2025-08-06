@@ -13,19 +13,26 @@ const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
+// Trust proxy if we're behind one (GitHub Codespaces, Heroku, etc.)
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.vercel.app'] 
-    : ['http://localhost:3000'],
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://your-frontend-domain.vercel.app']
+    : ['http://localhost:3000', 'https://didactic-space-parakeet-x4j77vp9vp92wx9-3000.app.github.dev'],
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting with proper proxy configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for development
+  skip: (req) => process.env.NODE_ENV === 'development',
 });
 app.use(limiter);
 
@@ -53,9 +60,9 @@ app.get('/api/health', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!', 
-    error: process.env.NODE_ENV === 'development' ? err.message : {} 
+  res.status(500).json({
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
 });
 

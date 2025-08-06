@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Calendar, Clock, Tag, FileText, Loader } from 'lucide-react';
-import DatePicker from 'react-datepicker';
-import Select from 'react-select';
 import toast from 'react-hot-toast';
 import {
   useCreateTaskMutation,
@@ -10,12 +8,12 @@ import {
 } from '../../store/api/tasksApi';
 import { useGetSectionsQuery } from '../../store/api/sectionsApi';
 import { useGetArticlesQuery } from '../../store/api/articlesApi';
-import 'react-datepicker/dist/react-datepicker.css';
 
 const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
+  console.log('TaskModal rendered with isOpen:', isOpen);
   const isEditing = Boolean(task);
-  const [dueDate, setDueDate] = useState(new Date());
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 16));
+  const [selectedTags, setSelectedTags] = useState('');
   const [selectedArticles, setSelectedArticles] = useState([]);
 
   const {
@@ -55,19 +53,10 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
         section: task.section._id || task.section,
         estimatedTime: task.estimatedTime || '',
       });
-      setDueDate(new Date(task.dueDate));
+      setDueDate(new Date(task.dueDate).toISOString().slice(0, 16));
       
       if (task.tags) {
-        setSelectedTags(task.tags.map(tag => ({ value: tag, label: tag })));
-      }
-      
-      if (task.linkedArticles) {
-        setSelectedArticles(
-          task.linkedArticles.map(article => ({
-            value: article._id,
-            label: article.title,
-          }))
-        );
+        setSelectedTags(task.tags.join(', '));
       }
     } else {
       reset({
@@ -79,8 +68,8 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
         section: '',
         estimatedTime: '',
       });
-      setDueDate(new Date());
-      setSelectedTags([]);
+      setDueDate(new Date().toISOString().slice(0, 16));
+      setSelectedTags('');
       setSelectedArticles([]);
     }
   }, [task, reset]);
@@ -89,9 +78,9 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
     try {
       const taskData = {
         ...data,
-        dueDate: dueDate.toISOString(),
-        tags: selectedTags.map(tag => tag.value),
-        linkedArticles: selectedArticles.map(article => article.value),
+        dueDate: new Date(dueDate).toISOString(),
+        tags: selectedTags ? selectedTags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+        linkedArticles: selectedArticles,
       };
 
       if (isEditing) {
@@ -110,28 +99,21 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
   };
 
   // Prepare options for selects
-  const sectionOptions = sectionsData?.sections?.map(section => ({
-    value: section._id,
-    label: section.name,
-  })) || [];
-
-  const articleOptions = articlesData?.articles?.map(article => ({
-    value: article._id,
-    label: article.title,
-  })) || [];
+  const sectionOptions = sectionsData?.sections || [];
+  const articleOptions = articlesData?.articles || [];
 
   const priorityOptions = [
-    { value: 'low', label: 'Low', color: 'text-gray-600' },
-    { value: 'medium', label: 'Medium', color: 'text-blue-600' },
-    { value: 'high', label: 'High', color: 'text-orange-600' },
-    { value: 'urgent', label: 'Urgent', color: 'text-red-600' },
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+    { value: 'urgent', label: 'Urgent' },
   ];
 
   const statusOptions = [
-    { value: 'pending', label: 'Pending', color: 'text-gray-600' },
-    { value: 'in-progress', label: 'In Progress', color: 'text-blue-600' },
-    { value: 'completed', label: 'Completed', color: 'text-green-600' },
-    { value: 'cancelled', label: 'Cancelled', color: 'text-red-600' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' },
   ];
 
   if (!isOpen) return null;
@@ -198,9 +180,9 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
                   className={`input ${errors.section ? 'input-error' : ''}`}
                 >
                   <option value="">Select a section</option>
-                  {sectionOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+                  {sectionOptions.map(section => (
+                    <option key={section._id} value={section._id}>
+                      {section.name}
                     </option>
                   ))}
                 </select>
@@ -213,13 +195,12 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
 
               <div>
                 <label className="label">Due Date *</label>
-                <DatePicker
-                  selected={dueDate}
-                  onChange={setDueDate}
-                  showTimeSelect
-                  dateFormat="MMM d, yyyy h:mm aa"
+                <input
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                   className="input"
-                  placeholderText="Select due date"
+                  required
                 />
               </div>
             </div>
@@ -270,30 +251,37 @@ const TaskModal = ({ isOpen, onClose, task = null, onSuccess }) => {
             {/* Tags */}
             <div>
               <label className="label">Tags</label>
-              <Select
+              <input
+                type="text"
                 value={selectedTags}
-                onChange={setSelectedTags}
-                isMulti
-                isCreatable
-                placeholder="Add tags..."
-                className="react-select-container"
-                classNamePrefix="react-select"
-                formatCreateLabel={(inputValue) => `Create tag "${inputValue}"`}
+                onChange={(e) => setSelectedTags(e.target.value)}
+                className="input"
+                placeholder="Enter tags separated by commas"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Separate multiple tags with commas
+              </p>
             </div>
 
             {/* Linked Articles */}
             <div>
               <label className="label">Linked Articles</label>
-              <Select
-                options={articleOptions}
+              <select
+                multiple
                 value={selectedArticles}
-                onChange={setSelectedArticles}
-                isMulti
-                placeholder="Link to articles..."
-                className="react-select-container"
-                classNamePrefix="react-select"
-              />
+                onChange={(e) => setSelectedArticles(Array.from(e.target.selectedOptions, option => option.value))}
+                className="input"
+                size={3}
+              >
+                {articleOptions.map(article => (
+                  <option key={article._id} value={article._id}>
+                    {article.title}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Hold Ctrl/Cmd to select multiple articles
+              </p>
             </div>
 
             {/* Notes */}

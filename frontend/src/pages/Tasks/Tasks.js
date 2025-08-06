@@ -23,6 +23,8 @@ import {
 } from '../../store/api/tasksApi';
 import { useGetSectionsQuery } from '../../store/api/sectionsApi';
 import TaskModal from '../../components/Tasks/TaskModal';
+import SimpleTaskModal from '../../components/Tasks/SimpleTaskModal';
+import DebugInfo from '../../components/Debug/DebugInfo';
 
 const Tasks = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,8 +57,10 @@ const Tasks = () => {
   const sections = sectionsData?.sections || [];
 
   const handleCreateTask = () => {
+    console.log('Create task button clicked');
     setEditingTask(null);
     setIsModalOpen(true);
+    console.log('Modal state set to true');
   };
 
   const handleEditTask = (task) => {
@@ -261,6 +265,9 @@ const Tasks = () => {
 
   return (
     <div className="space-y-6">
+      {/* Debug Info */}
+      <DebugInfo />
+      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -419,10 +426,9 @@ const Tasks = () => {
       )}
 
       {/* Task Modal */}
-      <TaskModal
+      <SimpleTaskModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        task={editingTask}
         onSuccess={() => refetch()}
       />
     </div>

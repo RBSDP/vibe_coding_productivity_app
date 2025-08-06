@@ -13,6 +13,8 @@ import {
   FileText,
   MoreVertical,
   Eye,
+  Folder,
+  Settings,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -24,11 +26,13 @@ import {
 import { useGetSectionsQuery } from '../../store/api/sectionsApi';
 import TaskModal from '../../components/Tasks/TaskModal';
 import SimpleTaskModal from '../../components/Tasks/SimpleTaskModal';
-import DebugInfo from '../../components/Debug/DebugInfo';
+import CollectionModal from '../../components/Collections/CollectionModal';
 
 const Tasks = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [editingCollection, setEditingCollection] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -49,7 +53,7 @@ const Tasks = () => {
   };
 
   const { data: tasksData, isLoading, refetch } = useGetTasksQuery(queryParams);
-  const { data: sectionsData } = useGetSectionsQuery();
+  const { data: sectionsData, refetch: refetchSections } = useGetSectionsQuery();
   const [deleteTask] = useDeleteTaskMutation();
   const [updateTask] = useUpdateTaskMutation();
 
@@ -61,6 +65,21 @@ const Tasks = () => {
     setEditingTask(null);
     setIsModalOpen(true);
     console.log('Modal state set to true');
+  };
+
+  const handleCreateCollection = () => {
+    setEditingCollection(null);
+    setIsCollectionModalOpen(true);
+  };
+
+  const handleEditCollection = (collection) => {
+    setEditingCollection(collection);
+    setIsCollectionModalOpen(true);
+  };
+
+  const handleCollectionSuccess = () => {
+    refetchSections();
+    setIsCollectionModalOpen(false);
   };
 
   const handleEditTask = (task) => {
@@ -265,9 +284,6 @@ const Tasks = () => {
 
   return (
     <div className="space-y-6">
-      {/* Debug Info */}
-      <DebugInfo />
-      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -279,14 +295,55 @@ const Tasks = () => {
             }
           </p>
         </div>
-        <button
-          onClick={handleCreateTask}
-          className="btn-primary"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Task
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleCreateCollection}
+            className="btn-secondary"
+          >
+            <Folder className="h-4 w-4 mr-2" />
+            New Collection
+          </button>
+          <button
+            onClick={handleCreateTask}
+            className="btn-primary"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Task
+          </button>
+        </div>
       </div>
+
+      {/* Collections Overview */}
+      {sections.length > 0 && (
+        <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-900">Collections</h3>
+            <span className="text-xs text-gray-500">{sections.length} collection{sections.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {sections.map((section) => (
+              <button
+                key={section._id}
+                onClick={() => setSelectedSection(selectedSection === section._id ? '' : section._id)}
+                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  selectedSection === section._id
+                    ? 'bg-primary-100 text-primary-800 ring-2 ring-primary-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <div
+                  className="w-2 h-2 rounded-full mr-2"
+                  style={{ backgroundColor: section.color }}
+                />
+                {section.name}
+                <span className="ml-1 text-gray-500">
+                  ({tasks.filter(t => t.section._id === section._id).length})
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow-soft border border-gray-200 p-4">
@@ -335,13 +392,13 @@ const Tasks = () => {
         {showFilters && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             <div>
-              <label className="label">Section</label>
+              <label className="label">Collection</label>
               <select
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
                 className="input"
               >
-                <option value="">All Sections</option>
+                <option value="">All Collections</option>
                 {sections.map(section => (
                   <option key={section._id} value={section._id}>
                     {section.name}
@@ -430,6 +487,14 @@ const Tasks = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => refetch()}
+      />
+
+      {/* Collection Modal */}
+      <CollectionModal
+        isOpen={isCollectionModalOpen}
+        onClose={() => setIsCollectionModalOpen(false)}
+        collection={editingCollection}
+        onSuccess={handleCollectionSuccess}
       />
     </div>
   );

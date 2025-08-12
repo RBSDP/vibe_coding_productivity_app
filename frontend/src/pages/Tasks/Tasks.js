@@ -25,7 +25,6 @@ import {
 } from '../../store/api/tasksApi';
 import { useGetSectionsQuery } from '../../store/api/sectionsApi';
 import TaskModal from '../../components/Tasks/TaskModal';
-import SimpleTaskModal from '../../components/Tasks/SimpleTaskModal';
 import CollectionModal from '../../components/Collections/CollectionModal';
 
 const Tasks = () => {
@@ -520,9 +519,10 @@ const Tasks = () => {
       )}
 
       {/* Task Modal */}
-      <SimpleTaskModal
+      <TaskModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        task={editingTask}
         onSuccess={() => refetch()}
       />
 

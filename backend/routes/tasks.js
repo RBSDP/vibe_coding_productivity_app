@@ -151,6 +151,7 @@ router.post('/', auth, [
     .isArray()
     .withMessage('Linked articles must be an array'),
   body('linkedArticles.*')
+    .optional()
     .isMongoId()
     .withMessage('Each linked article must be a valid ID'),
   body('tags')
@@ -158,7 +159,7 @@ router.post('/', auth, [
     .isArray()
     .withMessage('Tags must be an array'),
   body('estimatedTime')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 0 })
     .withMessage('Estimated time must be a positive integer')
 ], async (req, res) => {
@@ -277,6 +278,7 @@ router.put('/:id', auth, [
     .isArray()
     .withMessage('Linked articles must be an array'),
   body('linkedArticles.*')
+    .optional()
     .isMongoId()
     .withMessage('Each linked article must be a valid ID'),
   body('tags')
@@ -284,11 +286,11 @@ router.put('/:id', auth, [
     .isArray()
     .withMessage('Tags must be an array'),
   body('estimatedTime')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 0 })
     .withMessage('Estimated time must be a positive integer'),
   body('actualTime')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 0 })
     .withMessage('Actual time must be a positive integer')
 ], async (req, res) => {

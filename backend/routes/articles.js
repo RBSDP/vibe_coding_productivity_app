@@ -103,34 +103,40 @@ router.get('/:identifier', auth, async (req, res) => {
 
 // Create new article
 router.post('/', auth, [
-  body('title')
-    .trim()
-    .notEmpty()
-    .withMessage('Article title is required')
-    .isLength({ max: 200 })
-    .withMessage('Title must be less than 200 characters'),
-  body('content')
-    .notEmpty()
-    .withMessage('Article content is required'),
-  body('slug')
-    .optional()
-    .trim()
-    .matches(/^[a-z0-9-]+$/)
-    .withMessage('Slug must contain only lowercase letters, numbers, and hyphens'),
-  body('excerpt')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Excerpt must be less than 500 characters'),
-  body('category')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Category must be less than 100 characters'),
   body('status')
     .optional()
     .isIn(['draft', 'published', 'archived'])
     .withMessage('Status must be draft, published, or archived'),
+  body('title')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Title must be less than 200 characters'),
+  body('title')
+    .if(body('status').equals('published'))
+    .notEmpty()
+    .withMessage('Article title is required'),
+  body('content')
+    .optional({ checkFalsy: true }),
+  body('content')
+    .if(body('status').equals('published'))
+    .notEmpty()
+    .withMessage('Article content is required'),
+  body('slug')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('Slug must contain only lowercase letters, numbers, and hyphens'),
+  body('excerpt')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Excerpt must be less than 500 characters'),
+  body('category')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Category must be less than 100 characters'),
   body('tags')
     .optional()
     .isArray()
@@ -140,10 +146,11 @@ router.post('/', auth, [
     .isArray()
     .withMessage('Referenced articles must be an array'),
   body('referencedArticles.*')
+    .optional()
     .isMongoId()
     .withMessage('Each referenced article must be a valid ID'),
   body('coverImage')
-    .optional()
+    .optional({ checkFalsy: true })
     .isURL()
     .withMessage('Cover image must be a valid URL')
 ], async (req, res) => {
@@ -227,36 +234,40 @@ router.post('/', auth, [
 
 // Update article
 router.put('/:id', auth, [
-  body('title')
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage('Article title cannot be empty')
-    .isLength({ max: 200 })
-    .withMessage('Title must be less than 200 characters'),
-  body('content')
-    .optional()
-    .notEmpty()
-    .withMessage('Article content cannot be empty'),
-  body('slug')
-    .optional()
-    .trim()
-    .matches(/^[a-z0-9-]+$/)
-    .withMessage('Slug must contain only lowercase letters, numbers, and hyphens'),
-  body('excerpt')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Excerpt must be less than 500 characters'),
-  body('category')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Category must be less than 100 characters'),
   body('status')
     .optional()
     .isIn(['draft', 'published', 'archived'])
     .withMessage('Status must be draft, published, or archived'),
+  body('title')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Title must be less than 200 characters'),
+  body('title')
+    .if(body('status').equals('published'))
+    .notEmpty()
+    .withMessage('Article title cannot be empty'),
+  body('content')
+    .optional({ checkFalsy: true }),
+  body('content')
+    .if(body('status').equals('published'))
+    .notEmpty()
+    .withMessage('Article content cannot be empty'),
+  body('slug')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('Slug must contain only lowercase letters, numbers, and hyphens'),
+  body('excerpt')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Excerpt must be less than 500 characters'),
+  body('category')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Category must be less than 100 characters'),
   body('tags')
     .optional()
     .isArray()
@@ -266,10 +277,11 @@ router.put('/:id', auth, [
     .isArray()
     .withMessage('Referenced articles must be an array'),
   body('referencedArticles.*')
+    .optional()
     .isMongoId()
     .withMessage('Each referenced article must be a valid ID'),
   body('coverImage')
-    .optional()
+    .optional({ checkFalsy: true })
     .isURL()
     .withMessage('Cover image must be a valid URL')
 ], async (req, res) => {

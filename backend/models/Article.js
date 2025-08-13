@@ -3,21 +3,19 @@ const mongoose = require('mongoose');
 const articleSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Article title is required'],
+    required: function() { return this.status === 'published'; },
     trim: true,
     maxlength: [200, 'Title must be less than 200 characters']
   },
   slug: {
     type: String,
-    required: true,
-    unique: true,
     trim: true,
     lowercase: true,
     match: [/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens']
   },
   content: {
     type: String,
-    required: [true, 'Article content is required']
+    required: function() { return this.status === 'published'; }
   },
   excerpt: {
     type: String,
@@ -74,13 +72,18 @@ const articleSchema = new mongoose.Schema({
 
 // Auto-generate slug from title if not provided
 articleSchema.pre('save', function(next) {
-  if (!this.slug && this.title) {
-    this.slug = this.title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim('-');
+  if (!this.slug) {
+    if (this.title) {
+      this.slug = this.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim('-');
+    } else {
+      // Fallback to ObjectId-based slug for drafts without title
+      this.slug = this._id.toString();
+    }
   }
   
   // Set publishedAt when status changes to published
@@ -93,8 +96,8 @@ articleSchema.pre('save', function(next) {
   }
   
   // Calculate estimated read time (average 200 words per minute)
-  if (this.isModified('content')) {
-    const wordCount = this.content.split(/\s+/).length;
+  if (this.isModified('content') && typeof this.content === 'string') {
+    const wordCount = this.content.split(/\s+/).filter(Boolean).length;
     this.readTime = Math.max(1, Math.ceil(wordCount / 200));
   }
   
